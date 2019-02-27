@@ -51,31 +51,9 @@ function [sigma_mu, ps, P_s1, P_s2, P_s3, P_s4]=catheter_kinematics(direction_an
     end
 
     g_st = g_st * gst_0;
-%     J_b_st=compute_body_jacobian_(gst_0, q_init, exp_cell_, theta_vec, 4);
     
-    J_sf =compute_spatial_jacobian_(q_init,jointAngles0);
+    [f_c0_, N_theta, J_sf, J_C_T_inv] = compute_contact_(gst_0, stiffnessMatrix, q_init, jointAngles0, u_0);
 
-    %compute other forces, gravitational or damping
-    N_theta = stiffnessMatrix * jointAngles0;
-    [tau_u, ~] = compute_tau(q_init, jointAngles0, u_0)
-    % In validation, given a reasonable torque, compute f_c and sigma, then add
-    % flow, under this torque
-
-    g_tc =  [1,0,0,0;
-             0,-1,0,0;
-             0,0,-1,0;
-             0,0,0,1];
-
-    g_sc = g_st * g_tc;
-
-    %compute f_c
-    B = [eye(3);zeros(3)];
-    J_Cf = B' * adjinv(g_sc) * J_sf;
-    J_C_T_inv = pinv(J_Cf');% inv(J_Cf * J_Cf') * J_Cf;
-
-    f_c0_ = J_C_T_inv * (tau_u - N_theta);
-    
-      
     surface_origin = tip_position(gst_0, q_init, jointAngles0);  
     surface_orientation = [1,0,0;
              0,-1,0;
@@ -88,25 +66,36 @@ function [sigma_mu, ps, P_s1, P_s2, P_s3, P_s4]=catheter_kinematics(direction_an
     options = optimoptions('fmincon', 'MaxFunEvals', 1000);
     
     dx = [0.1; 0.0];
-    numSteps = 3;
+    numSteps = 20;
     states = zeros(12, numSteps+1);
     states(:,1) = jointAngles0;
     u_ = u_0;
     u_vec = u_0;
+    tau_u = zeros(12, numSteps);
     initialJointAngles = zeros(12, 1);
+    f_c_ = f_c0_;
     figure(7);
     for j = 1:numSteps
-        [J_e, J_e_Nullspace, J_q, J_surface]=compute_jacobians_( q_init, l_c, stiffnessMatrix, states(:,j) , f_c0_, u_, surface_origin, surface_orientation );
+        [J_e, J_e_Nullspace, J_q, J_surface]=compute_jacobians_( q_init, l_c, stiffnessMatrix, states(:,j), f_c_, u_, surface_origin, surface_orientation )
 
-        dz = pinv([J_q, -J_e_Nullspace']) * pinv(J_e) * J_surface * dx;
+        pinv([J_q, -J_e_Nullspace'])
+        
+        dz = pinv([J_q, -J_e_Nullspace']) * pinv(J_e) * J_surface * dx %??
         du = dz(1:6);       
         u_ = u_ + du;
         
-        [states(:,j+1), hessian, lambda, exitflag] = min_potential_energy_conf( states(:,j), stiffnessMatrix,gst_0, q_init, l, u_, initialJointAngles, surface_origin, surface_orientation, options)
+        [states(:,j+1), hessian, lambda, exitflag] = min_potential_energy_conf( states(:,j), stiffnessMatrix,gst_0, q_init, l, u_, initialJointAngles, surface_origin, surface_orientation, options);
         fw_kinematics(l_c, l, states(:,j+1), 'k');
         pause;
         u_vec = [u_vec,u_];
+        tau_u(:,j) = compute_tau(q_init, states(:,j+1), u_);
+        
+        [f_c_, N_theta, J_sf, J_C_T_inv] = compute_contact_(gst_0, stiffnessMatrix, q_init, states(:,j+1), u_);
+        f_c_
+        sigma_mu_ = sqrt(f_c_(1) * f_c_(1) + f_c_(2) * f_c_(2)) / f_c_(3)
     end
+    
+    
 %     N_theta = zeros(12,1);
 %     tau_u = N_theta + J_Cf' * f_c0
 
@@ -121,7 +110,8 @@ function [sigma_mu, ps, P_s1, P_s2, P_s3, P_s4]=catheter_kinematics(direction_an
         f_c(:,i) = J_C_T_inv * (J_sf' * F_e(:,i) + tau_u - N_theta);
         sigma_mu(i) = sqrt(f_c(1,i) * f_c(1,i) + f_c(2,i) * f_c(2,i)) / (f_c(3,i));
     end
-sigma_mu_ = sqrt(f_c0_(1) * f_c0_(1) + f_c0_(2) * f_c0_(2)) / f_c0_(3)
+    
+
 %     subplot(2,1,2);
 %     for i = 1: Nsample
 %         line([sigma_mu(i),sigma_mu(i)],[0,0.5]);

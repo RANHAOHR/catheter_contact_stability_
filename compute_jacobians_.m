@@ -45,7 +45,9 @@ end
 
 
 function [J_q]=compute_quasistatic_jacobian_(l_c, f_c0_, q_init, jointAngles, surface_orientation, stiffnessMatrix, u)
-    lagrangeMultiplier = norm(f_c0_, 2);
+     lagrangeMultiplier = f_c0_(3);
+
+%     lagrangeMultiplier = norm(f_c0_, 2);
 
     surface_constraint_jacobian = @(jointAngles)(distance_jacobian( surface_orientation ) * compute_endeffector_jacobian_(q_init, jointAngles, l_c) ); % get the z axis
     fun = @(q)(stiffnessMatrix * q - ...
