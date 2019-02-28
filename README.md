@@ -1,1 +1,0 @@
-# catheter_contact_stability_
