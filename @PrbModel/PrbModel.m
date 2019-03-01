@@ -401,6 +401,7 @@ classdef PrbModel < CatheterKinematics
             initialGuess, currents, externalWrenches, initialJointAngles, x, options)
         [F_e] = compute_external_force(obj, velocity_samples, direction_angle, jointAngles)
         sigma = compute_contact_ratio(obj,f_c_)
+        [F_e_b, bodyJacobian] = external_drag_(obj, jointAngles, externalWrenches)
     end
     
     methods (Access = protected)

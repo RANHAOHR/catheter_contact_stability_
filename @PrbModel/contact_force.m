@@ -42,6 +42,7 @@ function J = contact_jacobian(obj, q)
 
     % Get parameters.
     g_sc = obj.surface.tangent_frame(obj.surface.projection(obj.tip_position(q)));  % Assume tip is on the surface
+
     g_sf = eye(4);
     p0 = obj.jointPositions;
 

@@ -21,7 +21,7 @@ function [force, jacobian] = contact_force_flow_(obj, jointAngles, currents, ext
 %         N =  -obj.stiffnessMatrix * jointAngles
 %         F_e
         force = pinv(jacobian') * (-obj.stiffnessMatrix * jointAngles + ...
-            obj.joint_torques(jointAngles, currents, externalWrenches) + J_sf' * F_e);
+            obj.joint_torques(jointAngles, currents, externalWrenches) - F_e);
     else
         force = zeros(3, 1);
     end
@@ -41,9 +41,9 @@ function [J, J_sf] = contact_jacobian(obj, q)
 % Output:
 % J is the Hand Jacobian ().
 %
-
     % Get parameters.
-    g_sc = obj.surface.tangent_frame(obj.surface.projection(obj.tip_position(q)));  % Assume tip is on the surface
+    g_sc = obj.surface.tangent_frame(obj.surface.projection(obj.tip_position(q))); % Assume tip is on the surface
+    
     g_sf = eye(4);
     p0 = obj.jointPositions;
 
@@ -76,4 +76,3 @@ function [J, J_sf] = contact_jacobian(obj, q)
     J = B_c' * adjinv(g_sc) * J_sf;
 
 end
-

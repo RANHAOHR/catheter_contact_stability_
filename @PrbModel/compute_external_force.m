@@ -20,24 +20,31 @@ function [F_e] = compute_external_force(obj, velocity_samples, direction_angle, 
 
     Nsample = size(velocity_samples,2);
 
-    F_e = zeros(6, Nsample);
+    F_e = zeros(12, Nsample);
     for j = 1:Nsample
         f_e_all = zeros(3,1);
-        tau_e_all = zeros(3,1);
+        tau_e_ = zeros(3,1);
         if velocity_samples(j) < 0
             direction = -direction_angle;
         else
             direction = direction_angle;
         end
+        
+
+        externalWrenches = zeros(6, obj.numJoints );
         for i = 1:obj.numJoints
-            f_e_temp = k_vec(i) * direction * velocity_samples(j) * velocity_samples(j);
-            f_e_all = f_e_all + f_e_temp;
+            f_e_ = k_vec(i) * direction * velocity_samples(j) * velocity_samples(j);
+            f_e_all = f_e_all + f_e_;
             
             p_it = vector2skewsym(positional_difference(:,i));
-            tau_e_all =  tau_e_all + p_it * f_e_temp; %cross(positional_difference(:,i), f_e_temp);
+            tau_e_ =  tau_e_ + p_it * f_e_; %cross(positional_difference(:,i), f_e_temp);
+            externalWrenches(:,i) = [f_e_; tau_e_ ];
         end
-        F_e(:,j)= [f_e_all; tau_e_all ];
         
+        
+        [F_e(:,j), ~] = obj.external_drag_(jointAngles, externalWrenches);
     end  
     
+
+%end of function    
 end
