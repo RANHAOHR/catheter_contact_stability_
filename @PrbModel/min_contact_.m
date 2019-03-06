@@ -21,5 +21,8 @@ end
 
 function [c, ceq] = point_constraint(obj, q_0, u_0, N_x, dv,externalWrenches, x)
     ceq = [];
-    c = -obj.equilibrium_contact_rh( q_0, u_0, N_x, dv,externalWrenches, x); % sigma has to be positive
+%     c = -obj.equilibrium_contact_rh( q_0, u_0, N_x, dv,externalWrenches, x); % sigma has to be positive
+    c(1) = -obj.equilibrium_contact_rh( q_0, u_0, N_x, dv,externalWrenches, x);
+    c(2) = obj.equilibrium_contact_rh( q_0, u_0, N_x, dv,externalWrenches, x) - 0.2;
+%     c = [c_1; c_2];
 end

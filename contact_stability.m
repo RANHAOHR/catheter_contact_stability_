@@ -4,7 +4,7 @@
 clear;
 close all;
 clc;
-
+set(0,'defaultfigurecolor','w');
 % Initialize PrbModel
 % surface = plane;
 numJoints = 4;
@@ -17,12 +17,16 @@ disturbances = zeros(6, catheter.get_num_joints());
 % Calculcate initial configuration
 state = [0.5236,0,0,-0.5236,0,0,0.2311,0,0, 0, 0, 0]';
 tip_ = catheter.tip_position(state);
-control = [0; 0; -1; 0; 0; -1]; % this can be really far away...
+control = [0; 0; -1.5; 0; 0; -1.5]; % this can be really far away...
 
-theta_vec0 = [[0.5236;0;0], [-0.5236;0;0], [-0.2311;0;0], [0;0;0]];
-state = reshape(theta_vec0,12,1);
-tip_ = catheter.tip_position(state);
-control = [0, 0, -4,0, 0, 3]';
+% state = [-0.5236,0,0,0.5236,0,0,-0.2311,0,0, 0, 0, 0]';
+% tip_ = catheter.tip_position(state);
+% control = [0.0; 0; 1; 0.0; -0.1; 1.5]; % this can be really far away...
+
+% theta_vec0 = [[0.5236;0;0], [-0.5236;0;0], [-0.2311;0;0], [0;0;0]];
+% state = reshape(theta_vec0,12,1);
+% tip_ = catheter.tip_position(state);
+% control = [0, 0, -4,0, 0, 3]';
 
 % Create a plane
 origin = [0; 0; tip_(3)]; %% just to gurantee on the surface plane now...
@@ -44,73 +48,70 @@ disp('contact_force = ');
 f_c_0 = catheter.contact_force(state, control, disturbances)
 catheter.tip_position(state)
 catheter.plot_catheter(state, 'blue');
-
 pause;
-% 
-% %% Find quasi-static configuration
-% 
-% % start contact force control
-% 
-% [J_e, endEffectorNullspace, J_q, surfaceJacobian] = catheter.jacobian(state, control, disturbances);
-% 
-% J_x = J_e * J_q;
-% N_x = null(J_x);
-% 
-% [control, state] = catheter.min_contact_( state, control, N_x, tip_, disturbances )
-% f_c_opt = catheter.contact_force(state, control, disturbances)
-% sigma_mu_opt = catheter.compute_contact_ratio(f_c_opt)
-% 
-% % catheter.tip_position(state)
-% % tip_
-% catheter.plot_catheter(state, 'red');
-% f_c_0
-% sigma_mu = catheter.compute_contact_ratio(f_c_0)
-% 
-% disp('Enter to proceed');
-% pause;
+
+%% Find quasi-static configuration
+
+% start contact force control
+
+[J_e, endEffectorNullspace, J_q, surfaceJacobian] = catheter.jacobian(state, control, disturbances); %endEffectorNullspace here is the transpose fo the null space...
+
+J_x = J_e * J_q;
+N_x = null(J_x);
+
+[control, state] = catheter.min_contact_( state, control, N_x, tip_, disturbances )
+f_c_opt = catheter.contact_force(state, control, disturbances)
+sigma_mu_opt = catheter.compute_contact_ratio(f_c_opt)
+
+% catheter.tip_position(state)
+% tip_
+catheter.plot_catheter(state, 'red');
+f_c_0
+sigma_mu = catheter.compute_contact_ratio(f_c_0)
+
+disp('Enter to proceed');
+pause;
+
 %% Add blood flow disturbance
+
+
 figure(2)
-% [velocity_samples] = blood_flow; % get blood flow samples
-velocity_samples = [0:0.01:0.9];
+[velocity_samples] = blood_flow; % get blood flow samples
 
-
-beta = pi/2;
-direction_angle = [cos(beta),cos(pi/2 - beta),0]';
-
-[F_e] = catheter.compute_external_force(velocity_samples, direction_angle, state);
-
-Nsample = size(F_e, 2);
-sigma_mu1 = zeros(1, Nsample);
-f_c = zeros(3, Nsample);
-for i = 1:Nsample
-    [f_c(:,i), ~] = catheter.contact_force_flow_(state, control, disturbances, F_e(:,i));
-    sigma_mu1(i) = catheter.compute_contact_ratio(f_c(:,i));
+% velocity_samples = [0:0.1:0.9];
+alpha = [0:0.5:2*pi]';
+ps_1 = zeros(size(alpha,1),1);
+for i = 1: size(alpha,1)
+        beta = [alpha(i),pi/2 - alpha(i),pi/2];
+        [sigma_mu1, f_c1 ps_1(i)] = catheter.compute_sigma_(velocity_samples, beta, state, control, disturbances, frictionCoefficient );
+        i
 end
-figure(2)
-plot(velocity_samples, f_c(1,:), 'r-.','LineWidth',2 );
+plot(alpha, ps_1, 'b-.','LineWidth',2 );
 hold on;
-plot(velocity_samples, f_c(2,:), 'g-.','LineWidth',2 );
-hold on;
-plot(velocity_samples, f_c(3,:), 'b-.','LineWidth',2 );
-figure(3)
-plot(velocity_samples, sigma_mu1, 'y-.','LineWidth',2 );
+
 % 
-% v_safe1 = sigma_mu1(sigma_mu1 <= frictionCoefficient & sigma_mu1 >= 0 );
-% P_s1 = size(v_safe1,2) / Nsample;
+% alpha = [-pi/6:0.01:pi/6]';
+% sigma_mu1 = zeros(1,size(alpha,1));
+% for j = 1:size(velocity_samples,2)
+%     for i = 1: size(alpha,1)
+%         beta = [pi/2, alpha(i),pi/2 - alpha(i)];
+%         [sigma_mu1(i), f_c1 ps_1] = catheter.compute_sigma_(velocity_samples(j), beta, state, control, disturbances, frictionCoefficient );
+%         
+%     end
+%     plot(alpha, sigma_mu1, 'b-.','LineWidth',2 );
+%     hold on;
 % 
-% 
-% beta = -pi/2;
-% direction_angle = [cos(beta),cos(pi/2 - beta),0]';
-% 
-% [F_e] = catheter.compute_external_force(velocity_samples, direction_angle, state);
-% 
-% Nsample = size(F_e, 2);
-% sigma_mu2 = zeros(1, Nsample);
-% f_c = zeros(3, Nsample);
-% for i = 1:Nsample
-%     [f_c(:,i), ~] = catheter.contact_force_flow_(state, control, disturbances, F_e(:,i));
-%     sigma_mu2(i) = sqrt(f_c(1,i) * f_c(1,i) + f_c(2,i) * f_c(2,i)) / (f_c(3,i));
+%     pause;
+%     j
 % end
+% xlabel('Blood flow directional angle $\theta$ /rad','Interpreter','latex');
+% ylabel('Contact ratio $\sigma_\mu$ ','Interpreter','latex');
 % 
-% v_safe1 = sigma_mu2(sigma_mu2 <= frictionCoefficient & sigma_mu2 >= 0 );
-% P_s2 = size(v_safe1,2) / Nsample;
+
+xlabel('Blood flow directional angle $\theta$ /rad','Interpreter','latex');
+ylabel('Contact Stability Measure $P_s$ ','Interpreter','latex');
+
+
+Setfontsize = 15;
+set(get(gca,'Xlabel'),'FontSize',Setfontsize);
+set(get(gca,'Ylabel'),'FontSize',Setfontsize);

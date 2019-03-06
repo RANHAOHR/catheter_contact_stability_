@@ -1,4 +1,4 @@
-function [sigma_mu, jointAngles] = equilibrium_contact_rh(obj, q_0, u_0, N_x, dv,externalWrenches, x)
+function [sigma_mu] = equilibrium_contact_rh(obj, q_0, u_0, N_x, dv,externalWrenches, x)
     options = optimoptions('fmincon', 'MaxFunEvals', 1000);
 
     u = u_0 + N_x * dv;

@@ -1,5 +1,5 @@
 function [velocity_samples] = blood_flow
-    subplot(2,2,1);
+%     subplot(2,2,1);
     
     s = what('cwru_catheter_kinematics');
     s_data = strcat(s.path,'/data/pulmonary.mat');
@@ -13,9 +13,9 @@ function [velocity_samples] = blood_flow
     cross_area = pi * diam^2 / 4; % m^2
 
     flow_curve = pul_flow_curve * 10^(-6) / cross_area;
-    plot(x,flow_curve,'r','LineWidth',2);
-    xlabel('t /s');
-    ylabel('Pulmonary blood flow velocity m/s');    
+%     plot(x,flow_curve,'r','LineWidth',2);
+%     xlabel('t /s');
+%     ylabel('Pulmonary blood flow velocity m/s');    
 
     %interpolation
     sample_size = 10000;
@@ -48,7 +48,7 @@ function [velocity_samples] = blood_flow
         u = rand;
         velocity_samples(i) = flow_curve(find(cumulative_curve < u, 1, 'last')); %use the original curve for negtive velocity
     end
-    subplot(2,2,2);
+%     subplot(2,2,2);
 %     for i = 1: sample_size
 %         line([velocity_samples(i),velocity_samples(i)],[0,0.5]);
 %         hold on;
@@ -57,12 +57,12 @@ function [velocity_samples] = blood_flow
 %     dmax = max(velocity_samples) + 0.1;
 %     set(gca,'ytick',[]) %need not show the y axis.
 %     axis([dmin dmax 0 1]);
-    histogram(velocity_samples);
-
-    xlabel('Distribution of pulmonary blood velocity samples $||v||$ m/s','Interpreter','latex');
-    Setfontsize = 15;
-    set(get(gca,'Xlabel'),'FontSize',Setfontsize);
-    set(get(gca,'Ylabel'),'FontSize',Setfontsize);
+%     histogram(velocity_samples);
+% 
+%     xlabel('Distribution of pulmonary blood velocity samples $||v||$ m/s','Interpreter','latex');
+%     Setfontsize = 15;
+%     set(get(gca,'Xlabel'),'FontSize',Setfontsize);
+%     set(get(gca,'Ylabel'),'FontSize',Setfontsize);
 end
 
  
