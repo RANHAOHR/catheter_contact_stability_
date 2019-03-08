@@ -41,12 +41,17 @@ for jointNumber = 1:1:obj.numJoints
         bodyJacobian(:, 3 * i, jointNumber) =  adjinv(linkConfiguration) * twistZ;
     end
     
-    % External wrench in body frame.
-    externalWrenchBody = [linkConfiguration(1:3, 1:3)', zeros(3, 3); zeros(3, 3), linkConfiguration(1:3, 1:3)'] * externalWrenches(:, jointNumber);
+%     % External wrench in body frame.
+%     externalWrenchBody = [linkConfiguration(1:3, 1:3)', zeros(3, 3); zeros(3, 3), linkConfiguration(1:3, 1:3)'] * externalWrenches(:, jointNumber);
+% 
+%     % Add to joint torques.
+%     F_e_b = F_e_b + bodyJacobian(:, :, jointNumber)' * externalWrenchBody;
+
+    externalWrenchBody = [linkConfiguration(1:3, 1:3)', zeros(3, 3); zeros(3, 3), linkConfiguration(1:3, 1:3)'] * externalWrenches(:,:,jointNumber);
 
     % Add to joint torques.
     F_e_b = F_e_b + bodyJacobian(:, :, jointNumber)' * externalWrenchBody;
-    
+
 end
 
 end

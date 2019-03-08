@@ -17,6 +17,7 @@ function [k_vec]=compute_drag_coeffs(obj, direction_angle, jointAngles)
         wvec = jointAngles(3*i-2: 3*i,1);
         R = R * so3rot(wvec,1);
         l_i = R * [Aera_0(i),Aera_0(i),0]'; % area in x y z  aidrection after rotation
+        l_i = abs(l_i);
 %         Aera_R(:,i) = l_i; %the z length
         final_area(i) = compute_area(direction_angle, l_i);
     end

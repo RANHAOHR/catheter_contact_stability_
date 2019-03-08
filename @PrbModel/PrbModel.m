@@ -394,15 +394,21 @@ classdef PrbModel < CatheterKinematics
         % Output:
         % velocities is a joint angles velocity vector.
         %
-        [force, jacobian] = contact_force_flow_(obj, jointAngles, currents, externalWrenches, F_e)
-        [u, jointAngles] = min_contact_(obj, q_0, u_0, N_x, x,externalWrenches )
-        [sigma_mu] = equilibrium_contact_rh(obj, q_0, u_0, N_x, dv, externalWrenches, x)
+        [f_c, sigma_mu, jacobian] = contact_force_flow_(obj, jointAngles, currents, externalWrenches, F_e)
+        
+        [u, jointAngles] = min_contact_(obj, velocity_samples, alpha, q_0, u_0, N_x, x, externalWrenches, frictionCoefficient )
+%         [sigma_mu] = equilibrium_contact_flow_(obj, q_0, u_0, N_x, dv, externalWrenches, x)
+        [P_f] = equilibrium_contact_flow_(obj,velocity_samples, alpha, q_0, u_0, N_x, dv,externalWrenches, x, frictionCoefficient)
+        
         [jointAngles, hessian, lambda, exitflag] = min_potential_energy_conf_const(obj,...
             initialGuess, currents, externalWrenches, initialJointAngles, x, options)
+        
         [F_e] = compute_external_force(obj, velocity_samples, direction_angle, jointAngles)
         sigma = compute_contact_ratio(obj,f_c_)
         [F_e_b, bodyJacobian] = external_drag_(obj, jointAngles, externalWrenches)
-        [sigma_mu, f_c, P_s] = compute_sigma_(obj, velocity_samples, beta, state, control, disturbances, frictionCoefficient )
+        
+        [sigma_mu, f_c, P_s] = compute_sigma_(obj, velocity_samples, alpha, state, control, disturbances, frictionCoefficient )
+        velocity_angle_analysis(obj, alpha_range, w_v, state, control, disturbances, frictionCoefficient)
     end
     
     methods (Access = protected)

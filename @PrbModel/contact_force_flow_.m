@@ -1,4 +1,4 @@
-function [force, jacobian] = contact_force_flow_(obj, jointAngles, currents, externalWrenches, F_e)
+function [f_c, sigma_mu, jacobian] = contact_force_flow_(obj, jointAngles, currents, externalWrenches, F_e)
 %
 % [force, jacobian] = contact_force(jointAngles, currents, externalWrenches, epsilon)
 %
@@ -15,17 +15,27 @@ function [force, jacobian] = contact_force_flow_(obj, jointAngles, currents, ext
 % jacobian is the contact Jacobian (see eqn 5.14 MLS)
 %
     % If the surface is defined and the end-effector is on the surface.
+    Nsample = size(F_e, 2);
     if (~isempty(obj.surface) && abs(obj.surface.distance(obj.tip_position(jointAngles))) < 0.5)
-        [jacobian, J_sf] = contact_jacobian(obj, jointAngles);
-%         toque = obj.joint_torques(jointAngles, currents, externalWrenches)
-%         N =  -obj.stiffnessMatrix * jointAngles
-%         F_e
-        force = pinv(jacobian') * (-obj.stiffnessMatrix * jointAngles + ...
-            obj.joint_torques(jointAngles, currents, externalWrenches) - F_e);
-    else
-        force = zeros(3, 1);
-    end
+        jacobian = contact_jacobian(obj, jointAngles);
+        K_theta = -obj.stiffnessMatrix * jointAngles;
+        K_theta = repmat(K_theta, [1,Nsample]);
+        tau = obj.joint_torques(jointAngles, currents, externalWrenches);
+        tau = repmat(tau, [1,Nsample]);
 
+        force_ = K_theta + tau + F_e; % should be a 12*n matrix with forces in columns
+
+        f_c = pinv(jacobian') * force_; %the contact force
+        f_c_1 = f_c.^2;
+        f_c_1 = sum(f_c_1(1:2,:),1);
+        f_c_1 = sqrt(f_c_1);
+
+        sigma_mu = f_c_1 ./ f_c(3,:);
+    else
+        f_c = zeros(3, 1);
+        sigma_mu = -1; %not applicable
+    end
+    
 end
 
 function [J, J_sf] = contact_jacobian(obj, q)
