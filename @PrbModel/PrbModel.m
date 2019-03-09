@@ -411,7 +411,7 @@ classdef PrbModel < CatheterKinematics
         [sigma_mu, f_c, P_s] = compute_sigma_(obj, velocity_samples, alpha, state, control, disturbances, frictionCoefficient )
         velocity_angle_analysis(obj, alpha_range, w_v, state, control, disturbances, frictionCoefficient)
         
-        plot_P_s(obj, alpha_range, w_v, state, control, disturbances, frictionCoefficient)
+        plot_P_s(obj, alpha_range, w_v, state, control, disturbances, frictionCoefficient, linSpec)
     end
     
     methods (Access = protected)

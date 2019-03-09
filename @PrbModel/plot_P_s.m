@@ -1,5 +1,10 @@
 %%plot the sigma_mu with respect to the blood flow angles
-function plot_P_s(obj, alpha_range, w_v, state, control, disturbances, frictionCoefficient)
+function plot_P_s(obj, alpha_range, w_v, state, control, disturbances, frictionCoefficient, linSpec)
+
+if nargin == 7
+    linSpec = 'b-.';
+end
+
 [velocity_samples] = blood_flow;
 
 alpha = [alpha_range(1):0.1:alpha_range(2)]';
@@ -10,7 +15,7 @@ for i = 1: size(alpha,1)
 end
 
 x = alpha * 360 / (2*pi);
-plot(x, ps_1, 'b-.','LineWidth',2 );
+plot(x, ps_1, linSpec,'LineWidth',2 );
 ylim([0.5 1]);
 hold on;
 
