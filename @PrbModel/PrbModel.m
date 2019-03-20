@@ -415,7 +415,7 @@ classdef PrbModel < CatheterKinematics
         
         [J_CT,force] = compute_direction(obj, w_v, velocity_samples, state,control, disturbances )
         
-        [J_cu, J_ctheta, J_cq, J_tz] = compute_contact_jacbobian(obj, jointAngles, currents, Fe, J_e, disturbances)
+        [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, currents, Fe, J_e, f_c, disturbances)
         
     end
     
