@@ -3,7 +3,7 @@ function [sigma_mu, f_c, P_s] = compute_sigma_(obj, velocity_samples, alpha, sta
     if velocity_samples == 0
         [f_c, ~] = obj.contact_force(state, control, disturbances);
         sigma_mu = sqrt(f_c(1) * f_c(1) + f_c(2) * f_c(2)) / f_c(3);
-        P_s = -1;
+        P_s = 'NaN';
     else
         direction_angle = [cos(alpha(1)),cos(alpha(2)),cos(alpha(3))]';
 

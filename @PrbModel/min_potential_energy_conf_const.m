@@ -1,4 +1,4 @@
-function [jointAngles, hessian, lambda, exitflag] = ...
+function [jointAngles, exitflag, lambdas, hessian] = ...
     min_potential_energy_conf_const(obj, initialGuess, currents, externalWrenches, initialJointAngles, x, options)
 %
 % [jointAngles, hessian, lambda, exitflag] =
@@ -75,6 +75,6 @@ function [jointAngles, hessian, lambda, exitflag] = ...
 end
 
 function [c, ceq] = surface_constraint(obj, jointAngles, x)
-    ceq = obj.tip_position(jointAngles) - x;
+    ceq = x - obj.tip_position(jointAngles);
     c = [];  % Tip cannot go through surface
 end

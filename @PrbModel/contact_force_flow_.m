@@ -16,8 +16,9 @@ function [f_c, sigma_mu, jacobian] = contact_force_flow_(obj, jointAngles, curre
 %
     % If the surface is defined and the end-effector is on the surface.
     Nsample = size(F_e, 2);
-    if (~isempty(obj.surface) && abs(obj.surface.distance(obj.tip_position(jointAngles))) < 0.5)
-        jacobian = contact_jacobian(obj, jointAngles);
+    abs(obj.surface.distance(obj.tip_position(jointAngles)))
+    if (~isempty(obj.surface) && abs(obj.surface.distance(obj.tip_position(jointAngles))) < 100)
+        [jacobian, ~] = contact_jacobian(obj, jointAngles);
         K_theta = -obj.stiffnessMatrix * jointAngles;
         K_theta = repmat(K_theta, [1,Nsample]);
         tau = obj.joint_torques(jointAngles, currents, externalWrenches);

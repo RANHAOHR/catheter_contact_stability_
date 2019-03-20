@@ -22,6 +22,8 @@ function [force, jacobian] = contact_force(obj, jointAngles, currents, externalW
             obj.joint_torques(jointAngles, currents, externalWrenches));
     else
         force = zeros(3, 1);
+        
+        jacobian = 0;
     end
 
 end

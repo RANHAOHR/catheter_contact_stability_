@@ -401,7 +401,7 @@ classdef PrbModel < CatheterKinematics
         [P_f] = equilibrium_contact_flow_(obj,velocity_samples, alpha, q_0, u_0, N_x, dv,externalWrenches, x, frictionCoefficient)
         [sigma_mu] = equilibrium_contact_(obj, q_0, u_0, N_x, dv,externalWrenches, x)
         
-        [jointAngles, hessian, lambda, exitflag] = min_potential_energy_conf_const(obj,...
+        [jointAngles, exitflag, lambdas, hessian] = min_potential_energy_conf_const(obj,...
             initialGuess, currents, externalWrenches, initialJointAngles, x, options)
         
         [F_e] = compute_external_force(obj, velocity_samples, direction_angle, jointAngles)
@@ -412,6 +412,11 @@ classdef PrbModel < CatheterKinematics
         velocity_angle_analysis(obj, alpha_range, w_v, state, control, disturbances, frictionCoefficient)
         
         plot_P_s(obj, alpha_range, w_v, state, control, disturbances, frictionCoefficient, linSpec)
+        
+        [J_CT,force] = compute_direction(obj, w_v, velocity_samples, state,control, disturbances )
+        
+        [J_cu, J_ctheta, J_cq, J_tz] = compute_contact_jacbobian(obj, jointAngles, currents, Fe, J_e, disturbances)
+        
     end
     
     methods (Access = protected)
