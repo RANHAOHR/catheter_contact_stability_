@@ -17,8 +17,10 @@ function [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, cu
 %                 obj.tip_position(jointAngles)) * end_effector_jacobian(obj, jointAngles))
 %             end_effector_jacobian(obj, jointAngles)
 %             1/ norm(f_c) *
+
+
         fun_q = @(q)( obj.stiffnessMatrix * q - ...
-                obj.joint_torques(q, currents, disturbances) + 2 / norm(f_c) * (obj.surface.distance_jacobian(...
+                obj.joint_torques(q, currents, disturbances) + 1000 * (obj.surface.distance_jacobian(...
                 obj.tip_position(q)) * end_effector_jacobian(obj, q))' );
             
   

@@ -102,7 +102,9 @@ Nsample = size(F_e, 2);
 
 [state, exitflag, lambdas, hessian] = catheter.min_potential_energy_conf_const( state, control, disturbances, [], tip_, options)
 
-
+dfc1 = 0.0001* f_c(1) / sqrt(f_c(1)^2 + f_c(2)^2);
+dfc2 = 0.0001 * f_c(2) / sqrt(f_c(1)^2 + f_c(2)^2);
+dfc = [dfc1, dfc2 , 0.0]'
 for i = 1:200
     
 tip_ = catheter.tip_position(state);
@@ -111,31 +113,26 @@ tip_ = catheter.tip_position(state);
 [f_c, ~, ~] = catheter.contact_force_flow_(state, control, disturbances, F_e);
 [J_cu, J_ctheta, J_cq] = catheter.compute_contact_jacbobian(state, control, F_e, J_e, f_c, disturbances);
 
-N_k = null(J_e);
-dv = zeros(1,size(N_k, 2))';
+N_k = eye(12) - pinv(J_e) * J_e;
+% dv = zeros(1,size(N_k, 2))';
+% dv(1) = 0.001;
 
-dfc1 = 0.0001* f_c(1) / sqrt(f_c(1)^2 + f_c(2)^2);
-dfc2 = 0.0001 * f_c(2) / sqrt(f_c(1)^2 + f_c(2)^2);
-dfc = [dfc1, dfc2 , 0.0]'
+dtheta = N_k;
+
+tip_ = catheter.tip_position(state)
+
 J_cq
 J_q
-J_test = J_ctheta * J_cq + J_cu;
+J_test = J_ctheta * dtheta * J_cq + J_cu;
 du = pinv(J_test) * dfc 
 
 % tip_ = catheter.tip_position(state + J_cq * du)
+% dtheta = J_cq * du;
 control = control + du;
-state = state + J_cq * du
-
-% [state, exitflag, lambdas, hessian] = catheter.min_potential_energy_conf_const( state, control, disturbances, [], tip_, options)
-
-% [state] = catheter.min_potential_energy_conf( state, control, disturbances, [], options)
-
-% [state1, H, Dh, exitflag] = catheter.equilibrium_conf_constr(state, tip_, control, disturbances);
-
-% tip_ = catheter.tip_position(state1)
-% [state, hessian, lambda, exitflag] = catheter.min_potential_energy_conf( state, control, disturbances, [], options);
+state = state + dtheta * J_cq * du
 [f_c, sigma_mu, jacobian] = catheter.contact_force_flow_(state, control, disturbances, F_e);
 f_c
+tip_ = catheter.tip_position(state)
 catheter.plot_catheter(state, 'red');
 pause;
 end
