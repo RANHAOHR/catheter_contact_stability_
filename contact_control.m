@@ -24,7 +24,6 @@ catheter.set_surface(plane);
 
 %% Find quasi-static configuration
 
-
 % Calculcate initial configuration
 state0 = 0.1 * randn(3 * catheter.get_num_joints(), 1);
 control0 = [0.05; 0; 0.15; 0.05; 0; 0.15];
@@ -43,99 +42,110 @@ disp(surface.distance(catheter.tip_position(state)));
 
 % Calculcate initial configurations
 % 
-state = [-0.624852668813324;-0.0542563518171362;-0.0525068370193255;-0.676749434104250;-0.0587686506749256;-0.0524679635706560;0.313943952439617;-0.336741809028734;0.0498084449473635;-0.0130426648031853;-0.0483865926995447;2.42792650671112e-08];
-tip_ = catheter.tip_position(state);
-control0 = [-0.0813856046291852;-0.213973639206613;0.273749605707889;0.112216434314529;0.157425830943400;0.0853017218434574]; % this can be really far away...
-
-% state = [0.0725, -0.0514, 1.1160, 0.1259, -0.2842, 1.1149, -0.2702, -0.1743, -1.5707, -0.2305, 0.2968, 0.0]';
+% state = [-0.624852668813324;-0.0542563518171362;-0.0525068370193255;-0.676749434104250;-0.0587686506749256;-0.0524679635706560;0.313943952439617;-0.336741809028734;0.0498084449473635;-0.0130426648031853;-0.0483865926995447;2.42792650671112e-08];
 % tip_ = catheter.tip_position(state);
-% control0 = [0.6544, -2.0530, -1.5000, -0.08723, 1.5228, -1.9458]'; % this can be really far away...
+% control = [-0.0813856046291852;-0.213973639206613;0.273749605707889;0.112216434314529;0.157425830943400;0.0853017218434574]; % this can be really far away...
+
 % 
-% origin = [0; 0; tip_(3)] %% just to gurantee on the surface plane now...
-% orientation = so3rot([1; 0; 0], pi);
+% state = [-0.0737020339466517;-0.0218040664877389;0.557950048047828;-0.255235186705955;0.337803859876394;0.557141793151812;-0.179753774914578;-0.0895241380738602;1.55912523055963;-0.240881919228409;-0.175779886865597;1.43491696547212e-05];
+% tip_ = catheter.tip_position(state);
+% control = [-0.318923394305813;0.247555477222941;1.35576833186285;0.0412604294881832;-1.31774443872355;1.48556110031736];
+
+state = [0.0725, -0.0514, 1.1160, 0.1259, -0.2842, 1.1149, -0.2702, -0.1743, -1.5707, -0.2305, 0.2968, 0.0]';
+tip_ = catheter.tip_position(state);
+control = [0.6544, -2.0530, -1.5000, -0.08723, 1.5228, -1.9458]'; % this can be really far away...
+
+origin = [0; 0; tip_(3)] %% just to gurantee on the surface plane now...
+orientation = so3rot([1; 0; 0], pi);
 frictionCoefficient = 0.2;
 plane = Plane(origin, orientation, frictionCoefficient);
 catheter.set_surface(plane);
+tip_ = catheter.tip_position(state);
 
-tip_ = catheter.tip_position(state)
 % Print results
 figure(1);
-disp('contact_force = ');
-f_c_0 = catheter.contact_force(state, control0, disturbances)
-sigma_mu_0 = catheter.compute_contact_ratio(f_c_0)
+disp('Original contact force without blood flow = ');
+f_c_0 = catheter.contact_force(state, control, disturbances)
 % catheter.tip_position(state0);
 catheter.plot_catheter(state, 'blue');
 pause;
 
-%% start contact force searching
+%% evaluate blood flow disturbance
 
-% [J_e, endEffectorNullspace, J_q, surfaceJacobian] = catheter.jacobian(state0, control0, disturbances); %endEffectorNullspace here is the transpose fo the null space...
-% J_x = J_e * J_q;
-% N_x = null(J_x);
-% 
-% velocity_samples = 0;
-% alpha = 0;
-% 
-% [control, state] = catheter.min_contact_(velocity_samples, alpha, state0, control0, N_x, tip_, disturbances, frictionCoefficient );
-% state
-% control
-% [sigma_mu, f_c, P_s] = catheter.compute_sigma_(velocity_samples, alpha, state, control, disturbances, frictionCoefficient );
-% catheter.plot_catheter(state, 'red');
+% alpha_range = [0, 2*pi]';
+% w_v = @(alpha)[alpha, pi/2 - alpha, pi/2*ones(size(alpha,1), 1)];
+% catheter.velocity_angle_analysis(alpha_range, w_v,  state, control, disturbances, frictionCoefficient);
 
-control = control0;
-%% start contact force control given blood flow
-figure(2);
-% [velocity_samples] = blood_flow;
-velocity_samples = 0;
+[velocity_samples] = blood_flow;
 
-alpha = 0;
+alpha = pi;
 w_v = [alpha, pi/2 - alpha, pi/2];
 
-[sigma_mu, f_c, P_s] = catheter.compute_sigma_(velocity_samples, w_v, state, control, disturbances, frictionCoefficient );
-sigma_mu
-f_c
+[~, ~, P_s] = catheter.compute_sigma_(velocity_samples, w_v, state, control, disturbances, frictionCoefficient );
+display('Initial P_s under the given blood flow angle: ');
+P_s
+pause;
+%% start contact force control given blood flow
+
+velocity_samples = 0.9;
 
 direction_angle = [cos(w_v(1)),cos(w_v(2)),cos(w_v(3))]';
 
 [F_e] = catheter.compute_external_force(velocity_samples, direction_angle, state); %get the external motion caused by the blood flow
 Nsample = size(F_e, 2);
 
-[state, exitflag, lambdas, hessian] = catheter.min_potential_energy_conf_const( state, control, disturbances, [], tip_, options)
+[state, exitflag, lambdas, hessian] = catheter.min_potential_energy_conf_const( state, control, disturbances, [], tip_, options);
 
-dfc1 = 0.0001* f_c(1) / sqrt(f_c(1)^2 + f_c(2)^2);
-dfc2 = 0.0001 * f_c(2) / sqrt(f_c(1)^2 + f_c(2)^2);
-dfc = [dfc1, dfc2 , 0.0]'
-for i = 1:200
+[sigma_mu, f_c, P_s] = catheter.compute_sigma_(velocity_samples, w_v, state, control, disturbances, frictionCoefficient );
+display('Contact force under blood flow with 0.9m/s = ');
+f_c
+
+dfc_x =  - 0.0001 * f_c(1) / sqrt(f_c(1)^2 + f_c(2)^2);
+dfc_y =  - 0.0001 * f_c(2) /  sqrt(f_c(1)^2 + f_c(2)^2);
+dfc_z = 0.0;
+dfc = [dfc_x, dfc_y, dfc_z]';
+
+disp('The initial tip position = ');
+tip_ = catheter.tip_position(state)
+disp('The initial joint angle = ');
+state
+pause;
+
+for i = 1:400
     
-tip_ = catheter.tip_position(state);
 [J_e, endEffectorNullspace, J_q, surfaceJacobian] = catheter.jacobian(state, control, disturbances); %endEffectorNullspace here is the transpose fo the null space...
 
 [f_c, ~, ~] = catheter.contact_force_flow_(state, control, disturbances, F_e);
-[J_cu, J_ctheta, J_cq] = catheter.compute_contact_jacbobian(state, control, F_e, J_e, f_c, disturbances);
+[J_cu, J_ctheta, J_cq] = catheter.compute_contact_jacbobian(state, control, F_e, f_c, disturbances);
 
 N_k = eye(12) - pinv(J_e) * J_e;
-% dv = zeros(1,size(N_k, 2))';
-% dv(1) = 0.001;
 
-dtheta = N_k;
+J_test = J_ctheta * N_k * J_cq + J_cu;
+du = pinv(J_test) * dfc ;
 
-tip_ = catheter.tip_position(state)
-
-J_cq
-J_q
-J_test = J_ctheta * dtheta * J_cq + J_cu;
-du = pinv(J_test) * dfc 
-
-% tip_ = catheter.tip_position(state + J_cq * du)
-% dtheta = J_cq * du;
 control = control + du;
-state = state + dtheta * J_cq * du
-[f_c, sigma_mu, jacobian] = catheter.contact_force_flow_(state, control, disturbances, F_e);
+state = state + N_k * J_cq * du;
+[f_c, ~, jacobian] = catheter.contact_force_flow_(state, control, disturbances, F_e);
 f_c
 tip_ = catheter.tip_position(state)
 catheter.plot_catheter(state, 'red');
-pause;
+i
+% pause;
 end
 
+display('Optimized contact force under blood flow with 0.9m/s: ');
+f_c
+display('The new state: ');
 state
-[state, exitflag, lambdas, hessian] = catheter.min_potential_energy_conf_const( state, control, disturbances, [], tip_, options);
+
+pause;
+%% test
+figure(4);
+[velocity_samples] = blood_flow;
+[sigma_mu, f_c, P_s] = catheter.compute_sigma_(velocity_samples, w_v, state, control, disturbances, frictionCoefficient );
+display('Optimized P_s under the given blood flow angle: ');
+P_s
+% figure(5);
+% alpha_range = [0, 2*pi]';
+% w_v = @(alpha)[alpha, pi/2 - alpha, pi/2*ones(size(alpha,1), 1)];
+% catheter.velocity_angle_analysis(alpha_range, w_v,  state, control, disturbances, frictionCoefficient);

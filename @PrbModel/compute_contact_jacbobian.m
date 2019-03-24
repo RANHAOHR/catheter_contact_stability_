@@ -1,10 +1,9 @@
-function [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, currents, Fe, J_e, f_c, disturbances)
+function [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, currents, Fe, f_c, disturbances)
 
     %calculate it using the finite difference method.       
     % If the surface is defined and the end-effector is on the surface, use
     % the constrained Lagrangian. Otherwise, use the unconstrained Lagrangian.
-    tip_ = obj.tip_position(jointAngles);
-    if (~isempty(obj.surface) && abs(obj.surface.distance(obj.tip_position(jointAngles))) < 100)
+    if (~isempty(obj.surface) && abs(obj.surface.distance(obj.tip_position(jointAngles))) < 0.5)
         % Assuming that the joint angles is a minimizer of the potential energy,
         % the constraint force is equal to the contact force projected back
         % to the joint space.
@@ -17,7 +16,6 @@ function [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, cu
 %                 obj.tip_position(jointAngles)) * end_effector_jacobian(obj, jointAngles))
 %             end_effector_jacobian(obj, jointAngles)
 %             1/ norm(f_c) *
-
 
         fun_q = @(q)( obj.stiffnessMatrix * q - ...
                 obj.joint_torques(q, currents, disturbances) + 1000 * (obj.surface.distance_jacobian(...
@@ -33,10 +31,6 @@ function [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, cu
     J_cu = jacobian_forward_difference(fun_u, currents, 1e-08);
     J_ctheta = jacobian_forward_difference(fun_theta, jointAngles, 1e-08);
     hessian_q = jacobian_forward_difference(fun_q, jointAngles, 1e-08);
-    
-
-    
-    
    
     % Calculate the quasistatic Jacobian using the implicit function theorem.
     [~, ~, J_u, ~, B, P] = obj.actuation_maps(jointAngles);
