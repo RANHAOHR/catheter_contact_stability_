@@ -1,8 +1,10 @@
-function [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, currents, Fe, f_c, disturbances)
+function [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, currents, Fe, disturbances)
 
     %calculate it using the finite difference method.       
     % If the surface is defined and the end-effector is on the surface, use
     % the constrained Lagrangian. Otherwise, use the unconstrained Lagrangian.
+    
+    % [f_c, ~, ~] = catheter.contact_force_flow_(state, control, disturbances, Fe);
     if (~isempty(obj.surface) && abs(obj.surface.distance(obj.tip_position(jointAngles))) < 0.5)
         % Assuming that the joint angles is a minimizer of the potential energy,
         % the constraint force is equal to the contact force projected back
@@ -15,12 +17,11 @@ function [J_cu, J_ctheta, J_cq] = compute_contact_jacbobian(obj, jointAngles, cu
 %         surface_constraint_jacobian = (obj.surface.distance_jacobian(...
 %                 obj.tip_position(jointAngles)) * end_effector_jacobian(obj, jointAngles))
 %             end_effector_jacobian(obj, jointAngles)
-%             1/ norm(f_c) *
+
 
         fun_q = @(q)( obj.stiffnessMatrix * q - ...
                 obj.joint_torques(q, currents, disturbances) + 1000 * (obj.surface.distance_jacobian(...
                 obj.tip_position(q)) * end_effector_jacobian(obj, q))' );
-            
   
     else
         error('No contact detetcted.');

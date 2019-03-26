@@ -96,13 +96,20 @@ Nsample = size(F_e, 2);
 
 [state, exitflag, lambdas, hessian] = catheter.min_potential_energy_conf_const( state, control, disturbances, [], tip_, options);
 
-[sigma_mu, f_c, P_s] = catheter.compute_sigma_(velocity_samples, w_v, state, control, disturbances, frictionCoefficient );
+[sigma_mu, f_c_0, P_s] = catheter.compute_sigma_(velocity_samples, w_v, state, control, disturbances, frictionCoefficient );
 display('Contact force under blood flow with 0.9m/s = ');
-f_c
+f_c_0
 
-dfc_x =  - 0.0001 * f_c(1) / sqrt(f_c(1)^2 + f_c(2)^2);
-dfc_y =  - 0.0001 * f_c(2) /  sqrt(f_c(1)^2 + f_c(2)^2);
-dfc_z = 0.0;
+k_f = 0.0001;
+k_c = 0.0002;
+dfc_x =  - k_f * f_c_0(1) / sqrt(f_c_0(1)^2 + f_c_0(2)^2);
+dfc_y =  - k_f * f_c_0(2) /  sqrt(f_c_0(1)^2 + f_c_0(2)^2);
+if f_c_0(3) < 0.0
+    dfc_z = k_c;
+else
+    dfc_z = 0.0;
+end
+
 dfc = [dfc_x, dfc_y, dfc_z]';
 
 disp('The initial tip position = ');
@@ -111,17 +118,16 @@ disp('The initial joint angle = ');
 state
 pause;
 
-for i = 1:400
+for i = 1:500
     
 [J_e, endEffectorNullspace, J_q, surfaceJacobian] = catheter.jacobian(state, control, disturbances); %endEffectorNullspace here is the transpose fo the null space...
 
-[f_c, ~, ~] = catheter.contact_force_flow_(state, control, disturbances, F_e);
-[J_cu, J_ctheta, J_cq] = catheter.compute_contact_jacbobian(state, control, F_e, f_c, disturbances);
+[J_cu, J_ctheta, J_cq] = catheter.compute_contact_jacbobian(state, control, F_e, disturbances);
 
 N_k = eye(12) - pinv(J_e) * J_e;
 
 J_test = J_ctheta * N_k * J_cq + J_cu;
-du = pinv(J_test) * dfc ;
+du = pinv(J_test) * dfc;
 
 control = control + du;
 state = state + N_k * J_cq * du;
@@ -130,7 +136,7 @@ f_c
 tip_ = catheter.tip_position(state)
 catheter.plot_catheter(state, 'red');
 i
-% pause;
+pause;
 end
 
 display('Optimized contact force under blood flow with 0.9m/s: ');
@@ -140,7 +146,6 @@ state
 
 pause;
 %% test
-figure(4);
 [velocity_samples] = blood_flow;
 [sigma_mu, f_c, P_s] = catheter.compute_sigma_(velocity_samples, w_v, state, control, disturbances, frictionCoefficient );
 display('Optimized P_s under the given blood flow angle: ');
