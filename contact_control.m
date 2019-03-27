@@ -70,10 +70,13 @@ f_c_0 = catheter.contact_force(state, control, disturbances)
 catheter.plot_catheter(state, 'blue');
 pause;
 
-%% evaluate blood flow disturbance
+%% evaluate blood flow disturbance and contact stability
 
 % alpha_range = [0, 2*pi]';
 % w_v = @(alpha)[alpha, pi/2 - alpha, pi/2*ones(size(alpha,1), 1)];
+% 
+% % alpha_range = [-pi/6, pi/6]';
+% % w_v = @(alpha)[pi/2*ones(size(alpha,1), 1), alpha, pi/2 - alpha];
 % catheter.velocity_angle_analysis(alpha_range, w_v,  state, control, disturbances, frictionCoefficient);
 
 [velocity_samples] = blood_flow;
@@ -85,6 +88,24 @@ w_v = [alpha, pi/2 - alpha, pi/2];
 display('Initial P_s under the given blood flow angle: ');
 P_s
 pause;
+
+%% evaluate sigma_mu
+
+% [velocity_samples] = blood_flow;
+% 
+% alpha = 0;
+% w_v = [alpha, pi/2 - alpha, pi/2];
+% 
+% [sigma_mu, ~, ~] = catheter.compute_sigma_(velocity_samples, w_v, state, control, disturbances, frictionCoefficient );
+% 
+% subplot(2,1,2);
+% histogram(sigma_mu);
+% 
+% xlabel('Distribution of $\sigma_\mu$  samples','Interpreter','latex');
+% Setfontsize = 15;
+% set(get(gca,'Xlabel'),'FontSize',Setfontsize);
+% set(get(gca,'Ylabel'),'FontSize',Setfontsize);
+
 %% start contact force control given blood flow
 
 velocity_samples = 0.9;
@@ -136,7 +157,7 @@ f_c
 tip_ = catheter.tip_position(state)
 catheter.plot_catheter(state, 'red');
 i
-pause;
+% pause;
 end
 
 display('Optimized contact force under blood flow with 0.9m/s: ');
