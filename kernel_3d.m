@@ -1,8 +1,4 @@
-function phi_ = kernel_3d(N)
-
-    syms x
-    syms y
-    syms z
+function phi_ = kernel_3d(x, y, z, N)
 
     p_x = [1];
 
@@ -26,6 +22,6 @@ function phi_ = kernel_3d(N)
     end
     phi_ = p_x(1:N);
     
-    diff(phi_, x)
+    L_u = partial_L(x,y,z, phi_);
   
 end

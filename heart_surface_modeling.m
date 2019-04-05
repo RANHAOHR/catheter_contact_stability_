@@ -43,8 +43,12 @@ set(0,'defaultfigurecolor','w');
 % scatter3(query_(1), query_(2), query_y, 'b.');
 
 %surface modeling
+syms x
+syms y
+syms z
+    
 N = 20;
-phi_ = kernel_3d(N)
+phi_ = kernel_3d(x,y,z,N)
 
 
 xlabel('x (mm)');
