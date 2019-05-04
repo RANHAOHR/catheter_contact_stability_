@@ -21,7 +21,5 @@ function phi_ = kernel_3d(x, y, z, N)
 
     end
     phi_ = p_x(1:N);
-    
-    L_u = partial_L(x,y,z, phi_);
-  
+
 end

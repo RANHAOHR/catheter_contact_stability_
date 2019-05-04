@@ -43,12 +43,25 @@ set(0,'defaultfigurecolor','w');
 % scatter3(query_(1), query_(2), query_y, 'b.');
 
 %surface modeling
+D = material_matrix;
+
 syms x
 syms y
 syms z
     
-N = 20;
-phi_ = kernel_3d(x,y,z,N)
+Nsample = 20;
+phi_ = kernel_3d(x,y,z,Nsample);
+
+strain_epsilon = partial_L(x, y, z, phi_); 
+
+stress_ = D * strain_epsilon;  % tau = D * epsilon, hooke's law
+
+K_1 = partial_L_T(x, y, z, stress_);
+
+N = [1,0,0,0,0,0;0,1,0,0,0,1;0,0,1,1,1,0]';
+
+stiffness = ones(1, 3)' * 1000;
+R = diag(stiffness);
 
 
 xlabel('x (mm)');
